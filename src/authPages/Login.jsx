@@ -46,7 +46,7 @@ const Login = () => {
                     }
         
                 } else {
-                    Cookies.set('ris_ui_tok_id', res.data.token);
+                    Cookies.set('ris_ui_tok_id', res.data.token, { expires: 30 }); 
                     window.location.href='/'
                 }
             }
