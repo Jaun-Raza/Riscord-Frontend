@@ -15,7 +15,6 @@ const SignUp = () => {
         bio: ""
     });
 
-    console.log(signUpData);
     const navigate = useNavigate();
     const [signUp] = useSignUpMutation();
 
@@ -46,14 +45,15 @@ const SignUp = () => {
             
             if (!res.data?.success) {
 
-                if (res.data?.error) {
-                    alert(res.data?.error);
+                if (res.error?.data?.error) {
+                    alert(res.error?.data?.error);
                 } else {
                     alert('Unable To create your account');
                 }
     
             } else {
                 Cookies.set('ris_ui_tok_id', res.data.token);
+                window.location.href='/'
             }
         }
     }

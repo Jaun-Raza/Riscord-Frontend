@@ -17,6 +17,7 @@ import { useGetUserDataQuery } from './RTK/ApiRequests';
 
 // Assets
 import SplashScreen from './components/partials/SplashScreen';
+import CryptoJS from 'crypto-js'
 
 // Cookies
 import Cookies from 'js-cookie';
@@ -37,14 +38,27 @@ import Login from './authPages/Login';
 function App() {
 
   const { theme } = useSelector((state) => state.toggleTheme);
-  const { user } = useSelector((state) => state.userInfo);
-  console.log(user)
 
   // Redux 
   const dispatch = useDispatch();
 
   // Cookies 
   const token = Cookies.get('ris_ui_tok_id')
+
+  // Encryption & Decryption
+  function encryptObject(obj, key) {
+    const jsonString = JSON.stringify(obj);
+    const encryptedData = CryptoJS.AES.encrypt(jsonString, key).toString();
+    return encryptedData;
+  }
+
+  function decryptObject(encryptedData, key) {
+    if (!encryptObject.email) {
+      const decryptedBytes = CryptoJS.AES.decrypt(encryptedData, key);
+      const decryptedString = decryptedBytes.toString(CryptoJS.enc.Utf8);
+      return JSON.parse(decryptedString);
+    }
+  }
 
   // Api Reqs
   const GetUserInfo = async (token) => {
@@ -61,14 +75,19 @@ function App() {
         if (!data.success) {
           setSplash(true);
         }
-  
+
         if (token && data.success) {
-          dispatch(addInfo(data.user))
+          localStorage.setItem('us-uid-dta', encryptObject(data.user, process.env.REACT_APP_ENDEC_SECRET))
         }
       })
     } catch (error) {
       console.log('Auth Error', error)
     }
+  }
+
+
+  function GetDataThroughLocal(data) {
+    dispatch(addInfo(decryptObject(data, process.env.REACT_APP_ENDEC_SECRET)))
   }
 
   const [splash, setSplash] = useState(true);
@@ -81,26 +100,31 @@ function App() {
   });
 
   useEffect(() => {
-    if (user === 0) {
-      setTimeout(async() => {
-        setSplash(false);
-      }, 3000)
+    if (token) {
+      if (localStorage.getItem('us-uid-dta') === '' || !localStorage.getItem('us-uid-dta')) {
+        GetUserInfo(token).then(() => {
+          setTimeout(() => {
+            setSplash(false);
+          }, 3000)
+        })
+      } else {
+        GetDataThroughLocal(localStorage.getItem('us-uid-dta'))
+        setTimeout(() => {
+          setSplash(false);
+        }, 3000)
+      }
     }
 
-    if (token && user !== 0) {
-      GetUserInfo(token);
-      setSplash(false);
-    } 
   }, [token])
 
   return (
     <ThemeProvider theme={darkTheme}>
       <CssBaseline />
       <Routes>
-        <Route path="/" element={user !== 0 ? <Signin /> : !splash ? <Home /> : <SplashScreen />} />
-        <Route path="/all-friends" element={user !== 0 ? <Signin /> : <AllFriends />} />
-        <Route path="/sign-in" element={<SignUp />} />
-        <Route path="/login" element={<Login />} />
+        <Route path="/" element={!token ? <Signin /> : !splash ? <Home /> : <SplashScreen />} />
+        <Route path="/all-friends" element={!token ? <Signin /> : <AllFriends />} />
+        <Route path="/sign-in" element={!token ? <SignUp /> : <Home />} />
+        <Route path="/login" element={!token ? <Login /> : <Home />} />
       </Routes>
     </ThemeProvider>
   );

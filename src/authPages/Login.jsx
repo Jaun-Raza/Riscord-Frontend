@@ -2,15 +2,18 @@ import React, { useState } from 'react'
 import styled from 'styled-components'
 import { useNavigate } from 'react-router-dom';
 import Signin from '../pages/Signin';
-import { useSignUpMutation } from '../RTK/ApiRequests';
+import { useLogInMutation } from '../RTK/ApiRequests';
+
+// Cookies
+import Cookies from 'js-cookie';
 
 const Login = () => {
     const [logInData, setSlogInData] = useState({
         email: '',
-        password: '',
-        bio: ''
+        password: ''
     });
     const navigate = useNavigate()
+    const [logIn] = useLogInMutation()
 
     const handleChange = (e) => {
         setSlogInData((prevData) => ({
@@ -19,8 +22,34 @@ const Login = () => {
         }));
     }
 
-    const handleClick = async () => {
-        const { email, password, bio } = logInData;
+    const handleClick = async (e) => {
+        e.preventDefault()
+        const { email, password } = logInData;
+
+        if (!email || !password) return alert("Please fill out all fields")
+            else if (!email.includes('@gmail.com')) {
+                alert("Please provide a appropiate email")
+            } else if (password.length < 8) {
+                alert("Password must be at least 8 characters long");
+            } else {
+                const res = await logIn({
+                    email,
+                    password
+                })
+                
+                if (!res.data?.success) {
+    
+                    if (res.error?.data) {
+                        alert(res.error?.data?.error);
+                    } else {
+                        alert('Unable To Login');
+                    }
+        
+                } else {
+                    Cookies.set('ris_ui_tok_id', res.data.token);
+                    window.location.href='/'
+                }
+            }
 
     }
 
@@ -29,11 +58,10 @@ const Login = () => {
             <form onSubmit={handleClick}>
                 <input type="email" placeholder='Email' name='email' value={logInData.email} onChange={handleChange} />
                 <input type="password" placeholder='Password' name='password' value={logInData.password} onChange={handleChange} />
-                <input type="bio" placeholder='Bio' name='bio' value={logInData.bio} onChange={handleChange} />
                 <span>Want to register? <a onClick={() => {
                     navigate('/sign-in')
                 }}>SignUp</a></span>
-                <button>Log In</button>
+                <button type='submit'>Log In</button>
             </form>
         </LogInWrapper>
 

@@ -1,5 +1,4 @@
 import { createSlice } from '@reduxjs/toolkit';
-import { useGetUserDataQuery } from '../../RTK/ApiRequests';
 
 const initialState = {
     user: {}
@@ -17,11 +16,11 @@ const User = createSlice({
                 username: data.username,
                 email: data.email,
                 bio: data.bio,
-                joinedAt: data.createdAt,
-                theme: data.theme,
-                friends: data.friends,
-                notifications: data.notifications,
-                blockedFriends: data.blockedFriends,
+                joinedAt: data.joinedAt,
+                theme: data.theme || 'dark',
+                friends: data.friends || [],
+                notifications: data.notifications || [],
+                blockedFriends: data.blockedFriends || [],
             }
         },
     },
